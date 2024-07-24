@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Patient</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="card">
+      <div class="card-header">
+        <h2>Edit Patient</h2>
+      </div>
+      <div class="card-body">
+        <form id="editPatientForm">
+          <div class="form-group">
+            <label for="patientId">ID:</label>
+            <input type="text" class="form-control" id="patientId" readonly>
+          </div>
+          <div class="form-group">
+            <label for="patientName">Name:</label>
+            <input type="text" class="form-control" id="patientName" required>
+          </div>
+          <div class="form-group">
+            <label for="patientAge">Age:</label>
+            <input type="number" class="form-control" id="patientAge" required>
+          </div>
+          <div class="form-group">
+            <label for="patientContact">Contact:</label>
+            <input type="text" class="form-control" id="patientContact" required>
+          </div>
+          <div class="form-group">
+            <label for="patientIllness">Illness:</label>
+            <input type="text" class="form-control" id="patientIllness" required>
+          </div>
+          <div class="form-group">
+            <label for="patientAppointment">Next Appointment:</label>
+            <input type="date" class="form-control" id="patientAppointment" required>
+          </div>
+          <div class="form-group">
+            <label for="patientImage">Image:</label>
+            <input type="file" class="form-control-file" id="patientImage" accept="image/*">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+        <button class="btn btn-secondary mt-2" onclick="window.location.href='index.html'">Back to List</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const patientId = urlParams.get('id');
+
+      window.electronAPI.getPatientById(patientId).then((patient) => {
+        document.getElementById('patientId').value = patient.id;
+        document.getElementById('patientName').value = patient.name;
+        document.getElementById('patientAge').value = patient.age;
+        document.getElementById('patientContact').value = patient.contact;
+        document.getElementById('patientIllness').value = patient.illness;
+        document.getElementById('patientAppointment').value = patient.next_appointment;
+      }).catch((error) => {
+        console.error('Error fetching patient details:', error);
+      });
+
+      document.getElementById('editPatientForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const updatedPatient = {
+          id: patientId,
+          name: document.getElementById('patientName').value,
+          age: document.getElementById('patientAge').value,
+          contact: document.getElementById('patientContact').value,
+          illness: document.getElementById('patientIllness').value,
+          next_appointment: document.getElementById('patientAppointment').value,
+          image: document.getElementById('patientImage').files[0] ? document.getElementById('patientImage').files[0] : null
+        };
+
+        if (updatedPatient.image) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            updatedPatient.image = e.target.result.split(',')[1];
+            updatePatientData(updatedPatient);
+          };
+          reader.readAsDataURL(updatedPatient.image);
+        } else {
+          updatePatientData(updatedPatient);
+        }
+      });
+
+      function updatePatientData(updatedPatient) {
+        window.electronAPI.updatePatient(updatedPatient).then(() => {
+          alert('Patient updated successfully!');
+          window.location.href = 'index.html';
+        }).catch((error) => {
+          console.error('Error updating patient:', error);
+        });
+      }
+    });
+
+  </script>
+
+</body>
+
+</html>

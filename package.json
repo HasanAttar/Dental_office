@@ -1,0 +1,17 @@
+{
+  "name": "dental-office",
+  "version": "1.0.0",
+  "description": "Dental Office Management Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package-win": "electron-packager . dental-office --platform=win32 --arch=x64 --out=dist --overwrite"
+  },
+  "devDependencies": {
+    "electron": "^13.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}

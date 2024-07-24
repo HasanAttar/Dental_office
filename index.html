@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dental Office Management</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css">
+  <style>
+    body {
+      background-color: #f4f7f6;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .container {
+      margin-top: 20px;
+    }
+
+    .sidebar {
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200px;
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      color: white;
+    }
+
+    .sidebar ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .sidebar ul li {
+      margin: 15px 0;
+    }
+
+    .sidebar ul li a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .content {
+      margin-left: 200px;
+    }
+
+    .panel {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .panel-heading {
+      background-color: #007bff;
+      color: #fff;
+      padding: 15px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+
+    .panel-heading h2 {
+      margin: 0;
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    .table {
+      margin-bottom: 0;
+    }
+
+    .table th {
+      background-color: #f8f9fa;
+    }
+
+    .action-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 5px;
+    }
+
+    .action-list li {
+      display: inline;
+    }
+
+    .panel-footer {
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+
+    .pagination {
+      margin: 0;
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar">
+    <h2>Menu</h2>
+    <ul>
+      <li><a href="#" id="calendarLink">Calendar</a></li>
+      <li><a href="#" id="appointmentLink">Appointments</a></li>
+      <li><a href="#" id="patientListLink">Patient List</a></li>
+    </ul>
+  </div>
+  <div class="container content">
+    <div id="calendar" class="panel">
+      <div class="panel-heading">
+        <h2>Calendar</h2>
+      </div>
+      <div class="panel-body">
+        <div id="fullCalendar"></div>
+      </div>
+    </div>
+    <div id="appointmentList" class="panel" style="display: none;">
+      <div class="panel-heading">
+        <div class="btn-container">
+          <h2>Appointments</h2>
+          <button class="btn btn-primary" id="addAppointmentBtn">Add Appointment</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="appointmentListContent">
+            <!-- Appointment rows will be dynamically added here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="patientList" class="panel" style="display: none;">
+      <div class="panel-heading d-flex justify-content-between align-items-center">
+        <h2>Patient List</h2>
+        <button class="btn btn-primary" onclick="window.location.href='add-patient.html'">Add New Patient</button>
+      </div>
+      <div class="panel-body">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patientListContent">
+            <!-- Patient rows will be dynamically added here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Initialize the calendar
+      $('#fullCalendar').fullCalendar({
+        events: async function (start, end, timezone, callback) {
+          const appointments = await window.electronAPI.getAppointments(); // Replace with actual data fetch
+          const events = appointments.map(appointment => ({
+            title: appointment.patientName,
+            start: appointment.date + 'T' + appointment.startTime,
+            end: appointment.date + 'T' + appointment.endTime,
+            id: appointment.id // Include the appointment ID for reference
+          }));
+          callback(events);
+        },
+        dayClick: function (date) {
+          window.location.href = `new-appointment.html?date=${date.format()}`;
+        },
+        eventClick: function (event) {
+          window.location.href = `view-appointment.html?id=${event.id}`; // Redirect to appointment view/edit page
+        }
+      });
+
+      // Handle navigation links
+      document.getElementById('calendarLink').addEventListener('click', () => {
+        showPanel('calendar');
+      });
+
+      document.getElementById('appointmentLink').addEventListener('click', async () => {
+        await loadAppointments();
+        showPanel('appointmentList');
+      });
+
+      document.getElementById('patientListLink').addEventListener('click', async () => {
+        await loadPatients();
+        showPanel('patientList');
+      });
+
+      document.getElementById('addAppointmentBtn').addEventListener('click', () => {
+        window.location.href = 'new-appointment.html';
+      });
+
+      // Load appointments into the appointments panel
+      async function loadAppointments() {
+        const appointments = await window.electronAPI.getAppointments(); // Replace with actual data fetch
+        const appointmentListContent = document.getElementById('appointmentListContent');
+        appointmentListContent.innerHTML = '';
+        appointments.forEach((appointment, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${appointment.patientName}</td>
+            <td>${appointment.date}</td>
+            <td>${appointment.startTime} - ${appointment.endTime}</td>
+            <td>
+              <a href="view-appointment.html?id=${appointment.id}" class="btn btn-info"><i class="fa fa-eye"></i></a>
+              <button class="btn btn-danger delete-appointment" data-id="${appointment.id}"><i class="fa fa-trash"></i></button>
+            </td>
+          `;
+          appointmentListContent.appendChild(row);
+        });
+
+        // Add event listener for delete buttons
+        document.querySelectorAll('.delete-appointment').forEach(button => {
+          button.addEventListener('click', async (event) => {
+            const appointmentId = event.target.closest('button').getAttribute('data-id');
+            await window.electronAPI.deleteAppointment(appointmentId); // Replace with actual delete function
+            await loadAppointments(); // Refresh the appointment list
+            $('#fullCalendar').fullCalendar('refetchEvents'); // Refresh the calendar
+          });
+        });
+      }
+
+      // Load patients into the patients panel
+      async function loadPatients() {
+        const patients = await window.electronAPI.getPatients(10); // Adjust the limit as needed
+        const patientListContent = document.getElementById('patientListContent');
+        patientListContent.innerHTML = '';
+        patients.forEach((patient, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${patient.name}</td>
+            <td>${patient.age}</td>
+            <td>
+              <a href="view-patient.html?id=${patient.id}" class="btn btn-info"><i class="fa fa-eye"></i></a>
+              <button class="btn btn-danger delete-patient" data-id="${patient.id}"><i class="fa fa-trash"></i></button>
+            </td>
+          `;
+          patientListContent.appendChild(row);
+        });
+
+        // Add event listener for delete buttons
+        document.querySelectorAll('.delete-patient').forEach(button => {
+          button.addEventListener('click', async (event) => {
+            const patientId = event.target.closest('button').getAttribute('data-id');
+            await window.electronAPI.deletePatient(patientId); // Replace with actual delete function
+            await loadPatients(); // Refresh the patient list
+          });
+        });
+      }
+
+      // Function to show the specified panel
+      function showPanel(panelId) {
+        document.getElementById('calendar').style.display = 'none';
+        document.getElementById('appointmentList').style.display = 'none';
+        document.getElementById('patientList').style.display = 'none';
+        document.getElementById(panelId).style.display = 'block';
+      }
+
+      // Show the calendar by default
+      showPanel('calendar');
+    });
+  </script>
+</body>
+
+</html>
